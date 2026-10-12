@@ -113365,6 +113365,39 @@
       "source": "#Const Text = 1\r\nFunction Main() As Variant\r\n    Main = 1\r\nEnd Function\r\n",
       "evidencePhase": "compile",
       "diagnosticMeaning": "compile-valid"
+    },
+    {
+      "id": "rem_directive_const_skipped_arm_defines_nothing_runtime",
+      "description": "#Const A = 1 Rem note inside a skipped #If False arm defines nothing: a later #If A = 1 does not take the raising arm (issue #1321).",
+      "provenance": "vbe-oracle-verified",
+      "expected": "accepted",
+      "mode": "run",
+      "entryPoint": "Main",
+      "source": "#If False Then\r\n#Const A = 1 Rem note\r\n#End If\r\nFunction Main() As Variant\r\n#If A = 1 Then\r\n    Err.Raise 1001\r\n#Else\r\n    Main = 1\r\n#End If\r\nEnd Function\r\n",
+      "evidencePhase": "runtime",
+      "diagnosticMeaning": "runtime-valid"
+    },
+    {
+      "id": "rem_directive_const_continued_skipped_arm_defines_nothing_runtime",
+      "description": "#Const A = 1 _ continued onto a Rem line inside a skipped arm defines nothing (issue #1321).",
+      "provenance": "vbe-oracle-verified",
+      "expected": "accepted",
+      "mode": "run",
+      "entryPoint": "Main",
+      "source": "#If False Then\r\n#Const A = 1 _\r\n    Rem note\r\n#End If\r\nFunction Main() As Variant\r\n#If A = 1 Then\r\n    Err.Raise 1001\r\n#Else\r\n    Main = 1\r\n#End If\r\nEnd Function\r\n",
+      "evidencePhase": "runtime",
+      "diagnosticMeaning": "runtime-valid"
+    },
+    {
+      "id": "rem_directive_const_apostrophe_skipped_arm_defines_runtime",
+      "description": "control: #Const A = 1 ' note inside a skipped #If False arm still defines A, so #If A = 1 takes the raising arm (issue #1321).",
+      "provenance": "vbe-oracle-verified",
+      "expected": "rejected",
+      "mode": "run",
+      "entryPoint": "Main",
+      "source": "#If False Then\r\n#Const A = 1 ' note\r\n#End If\r\nFunction Main() As Variant\r\n#If A = 1 Then\r\n    Err.Raise 1001\r\n#Else\r\n    Main = 1\r\n#End If\r\nEnd Function\r\n",
+      "evidencePhase": "runtime",
+      "diagnosticMeaning": "runtime-error"
     }
   ]
 }
