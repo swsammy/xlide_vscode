@@ -51,3 +51,4 @@ import './liveDiagnosticsPerformance.test';
 
 import './runtimeAssignment.test';
 import './moduleSearch.test';
+import './oracleCompatibilityObservations.test';

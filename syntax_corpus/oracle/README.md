@@ -171,6 +171,71 @@ It rewrites the whole file as `JSON.stringify(document, null, 2)` with DEL
 and every non-ASCII character written as `\uXXXX`, so lay out hand-edited
 cases the same way; `tests/oracle/vbeOracleKnownCrash.test.ts` checks it.
 
+## Editor observations
+
+The oracle says what the VBE does; an editor observation shows what the
+extension itself publishes for the same program. The opt-in integration
+suite "Native oracle compatibility observations"
+(`src/test/oracleCompatibilityObservations.test.ts`) writes each probe's
+modules into a fresh project for its host, opens them in VS Code, waits for
+the diagnostics to be published, and records them. It runs only when both
+variables are set:
+
+- `XLIDE_ORACLE_OBSERVATION_MANIFEST`: a JSON file `{ "version": 1,
+  "cases": [ ... ] }` of probes;
+- `XLIDE_ORACLE_OBSERVATION_OUTPUT`: where it writes
+  `{ complete, inputPath, observations }`, after every probe.
+
+Each probe gives an `id`, a `host` (`excel`, `word`, `powerpoint` or
+`access`) and its `modules` (standard and class modules only). Each host
+starts from a copy of a fixture in `tests/fixtures/binaries`:
+`ShapesFixture.xlsm`, `WordFormFixture.docm`, `PowerPointFixture.pptm` or
+`AccessFixture.accdb`, with every module but the code-free document modules
+removed. A probe also gives:
+
+- `nativeVerdict`: the oracle result for this exact source; the suite reads
+  its `outcome`, `accepted` or `rejected`;
+- `publicationBarrier` and `targetPublicationBarriers`: witnesses, each
+  `{ "moduleName", "code": "unused-variable", "severity": "information",
+  "sourceText" }`, an unused local the extension reports. Every module needs
+  one: `publicationBarrier` in a marker module, the others in
+  `targetPublicationBarriers`. The suite reads diagnostics only after all of
+  them are published, never after a fixed wait, so measure the source with
+  its witnesses through the oracle;
+- `requireNoErrors` and `requireErrors`: whether the run fails unless the
+  extension publishes no error, or at least one. Without `requireErrors`, a
+  probe whose `nativeVerdict.outcome` is `rejected` requires an error. Set
+  both to `false` to observe a known difference without requiring it to
+  persist; a failed requirement stops the run.
+
+A probe with one module and the marker:
+
+```json
+{
+  "id": "observe_local_events_word",
+  "host": "word",
+  "modules": [
+    { "name": "Module1", "type": "standard", "source": "Option Explicit\nPublic Sub Main()\nDim moduleReady As Long\nEnd Sub\n" },
+    { "name": "ObservationMarker", "type": "standard", "source": "Option Explicit\nPublic Sub PublicationMarker()\nDim observationReady As Long\nEnd Sub\n" }
+  ],
+  "nativeVerdict": { "outcome": "accepted", "hostBuild": "16.0.20430.20182" },
+  "publicationBarrier": { "moduleName": "ObservationMarker", "code": "unused-variable", "severity": "information", "sourceText": "observationReady" },
+  "targetPublicationBarriers": [
+    { "moduleName": "Module1", "code": "unused-variable", "severity": "information", "sourceText": "moduleReady" }
+  ],
+  "requireNoErrors": true,
+  "requireErrors": false
+}
+```
+
+Run it on Windows with the host installed:
+
+```powershell
+$env:XLIDE_ORACLE_OBSERVATION_MANIFEST = "$PWD\probes.json"
+$env:XLIDE_ORACLE_OBSERVATION_OUTPUT = "$PWD\.vscode-test\observations.json"
+npm run test:integration -- --grep "Native oracle compatibility observations"
+```
+
 ## Requirements
 
 - Windows
