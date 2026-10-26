@@ -1,0 +1,118 @@
+name: Office dialogs trial
+
+# Trial for issue #1489: which settings stop Office's first-run screens
+# ("Sign in to set up Office", "Your privacy matters") on a hosted runner?
+# Each variant installs Office, applies its settings and reruns the live Office
+# checks that fail on any dialog. Runs only on pushes to this branch, in a fork.
+
+"on":
+  push:
+    branches: [trial/office-dialogs]
+
+permissions:
+  contents: read
+
+jobs:
+  variant:
+    name: ${{ matrix.name }}
+    runs-on: windows-2025
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: 'A control (earlier keys)', product: O365ProPlusRetail, channel: MonthlyEnterprise, scl: '0', privacy: '0', licensing: '0', oem: '0' }
+          - { name: 'B privacy policies + licensing keys', product: O365ProPlusRetail, channel: MonthlyEnterprise, scl: '0', privacy: '1', licensing: '1', oem: '0' }
+          - { name: 'C shared computer licensing', product: O365ProPlusRetail, channel: MonthlyEnterprise, scl: '1', privacy: '1', licensing: '1', oem: '0' }
+          - { name: 'D volume licensed ProPlus 2024', product: ProPlus2024Volume, channel: PerpetualVL2024, scl: '0', privacy: '1', licensing: '1', oem: '0' }
+          - { name: 'E OEM first-run mode', product: O365ProPlusRetail, channel: MonthlyEnterprise, scl: '0', privacy: '1', licensing: '1', oem: '1' }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24.22.0'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Office
+        shell: pwsh
+        run: |
+          $scl = if ('${{ matrix.scl }}' -eq '1') { '<Property Name="SharedComputerLicensing" Value="1" />' } else { '' }
+          $config = @"
+          <Configuration>
+            <Add OfficeClientEdition="64" Channel="${{ matrix.channel }}">
+              <Product ID="${{ matrix.product }}">
+                <Language ID="MatchOS" />
+                <ExcludeApp ID="Groove" /><ExcludeApp ID="Lync" /><ExcludeApp ID="OneDrive" /><ExcludeApp ID="OneNote" />
+                <ExcludeApp ID="OutlookForWindows" /><ExcludeApp ID="Publisher" /><ExcludeApp ID="Teams" />
+              </Product>
+            </Add>
+            $scl
+            <Property Name="AUTOACTIVATE" Value="0" />
+            <Display Level="None" AcceptEULA="TRUE" />
+          </Configuration>
+          "@
+          $path = Join-Path $env:RUNNER_TEMP 'odt-config.xml'
+          $config | Out-File -FilePath $path -Encoding utf8
+          Write-Host $config
+          choco install office365proplus -y --params "/ConfigPath:`"$path`""
+          Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Office\ClickToRun\Configuration' | Select-Object VersionToReport, ProductReleaseIds, SharedComputerLicensing | Format-List
+      - name: Apply the variant's settings
+        shell: pwsh
+        run: |
+          function Set-Value($key, $name, $value, $type = 'DWord') {
+            New-Item -Path $key -Force | Out-Null
+            New-ItemProperty -Path $key -Name $name -Value $value -PropertyType $type -Force | Out-Null
+            Write-Host "$key $name = $value"
+          }
+          $common = 'HKCU:\Software\Microsoft\Office\16.0\Common'
+          $policy = 'HKCU:\Software\Policies\Microsoft\Office\16.0\Common'
+          Set-Value "$common\General" ShownFirstRunOptin 1
+          Set-Value "$common\General" ShownOptIn 1
+          Set-Value 'HKCU:\Software\Microsoft\Office\16.0\Registration' AcceptAllEulas 1
+          Set-Value "$common\Privacy\SettingsStore\Anonymous" OptionalConnectedExperiencesNoticeVersion 2
+          Set-Value "$common\Privacy\SettingsStore\Anonymous" FRESettingsStoreVersion 2
+          Set-Value "$policy\SignIn" SignInOptions 3
+          Set-Value "$policy\General" ShownFirstRunOptin 1
+          if ('${{ matrix.privacy }}' -eq '1') {
+            Set-Value "$policy\Privacy" usercontentdisabled 2
+            Set-Value "$policy\Privacy" downloadcontentdisabled 2
+            Set-Value "$policy\Privacy" controllerconnectedservicesenabled 2
+            Set-Value "$policy\Privacy" disconnectedstate 2
+            Set-Value "$common\Privacy\SettingsStore\Anonymous" OptionalDiagnosticDataConsentVersion 1
+            Set-Value "$common\Privacy\SettingsStore\Anonymous" RequiredDiagnosticDataNoticeVersion 1
+            Set-Value "$common\Privacy\SettingsStore\Anonymous" ConnectedExperiencesNoticeVersion 1
+            Set-Value "$common\Privacy\SettingsStore\Anonymous" OptionalConnectedExperiencesNoticeVersion 1
+          }
+          if ('${{ matrix.licensing }}' -eq '1') {
+            Set-Value "$common\Licensing" DisableActivationUI 1
+            Set-Value "$policy\Licensing" DisableActivationUI 1
+            Set-Value "$common\Identity" NoDomainUser 1
+            Set-Value "$common\Identity" DisableAADWAM 1
+            Set-Value "$common\Identity" DisableADALatopWAMOverride 1
+            Set-Value "$common\General" SkipSignInOnFirstRun 1
+          }
+          if ('${{ matrix.oem }}' -eq '1') {
+            Set-Value 'HKLM:\SOFTWARE\Microsoft\Office\16.0\Common\OEM' OOBEMode 'OEMTA' 'String'
+          }
+      - name: Prepare Office
+        uses: DecimalTurn/setup-vba@797e4a232699a98507cb4411d5bea3697427ad57 # v0.3.0
+        with:
+          office-apps: Excel,Word,PowerPoint,Access
+          install-office: 'false'
+      - name: The live Office checks that fail on any dialog
+        continue-on-error: true
+        run: npx vitest run --config vitest.office.config.ts tests/office/addVba.office.ts tests/office/shapeFormatting.office.ts
+      - name: Strict oracle on the 50 collection_class cases (this variant's build)
+        if: matrix.product != 'O365ProPlusRetail'
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force test-results | Out-Null
+          $cases = Get-Content trial/strict-ids.txt | ForEach-Object { '--case'; $_ }
+          node syntax_corpus/oracle/run_vbe_oracle.mjs --strict --json @cases > test-results/strict.json
+          $code = $LASTEXITCODE
+          node -e "const t=require('fs').readFileSync('test-results/strict.json','utf8');const j=JSON.parse(t.slice(t.indexOf('{')));for(const r of j.results.filter(r=>!r.matched))console.log('differs',r.caseId,r.expected,r.outcome,r.message);const b=new Set(j.results.map(r=>r.hostBuild));const {results,...rest}=j;console.log('builds',[...b].join(', '),JSON.stringify(rest))"
+          exit $code
