@@ -1,0 +1,98 @@
+name: Office trial
+
+# Trial for issue #1489: can a GitHub-hosted Windows runner install Office,
+# run the VBE oracle in all four hosts, and run the editor observations?
+# Runs only on pushes to this trial branch, in a fork.
+
+"on":
+  push:
+    branches: [trial/office-ci]
+
+permissions:
+  contents: read
+
+jobs:
+  office:
+    name: Office trial (windows-2025)
+    runs-on: windows-2025
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24.22.0'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Note the start of the Office install
+        shell: pwsh
+        run: Get-Date -Format o | Tee-Object -FilePath "$env:RUNNER_TEMP\office-start.txt"
+      - name: Install and prepare Office
+        uses: DecimalTurn/setup-vba@797e4a232699a98507cb4411d5bea3697427ad57 # v0.3.0
+        with:
+          office-apps: Excel,Word,PowerPoint,Access
+      - name: Report the Office install
+        shell: pwsh
+        run: |
+          $start = [datetime](Get-Content "$env:RUNNER_TEMP\office-start.txt")
+          Write-Host "Office install and preparation took $([math]::Round(((Get-Date) - $start).TotalMinutes, 1)) minutes"
+          Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Office\ClickToRun\Configuration' |
+            Select-Object VersionToReport, CDNBaseUrl, Platform | Format-List
+          New-Item -ItemType Directory -Force test-results | Out-Null
+
+      - name: Strict oracle on the 50 collection_class cases
+        id: strict
+        continue-on-error: true
+        timeout-minutes: 60
+        shell: pwsh
+        run: |
+          $cases = Get-Content trial/strict-ids.txt | ForEach-Object { '--case'; $_ }
+          $start = Get-Date
+          node syntax_corpus/oracle/run_vbe_oracle.mjs --strict --json --checkpoint test-results/strict.jsonl @cases > test-results/strict.json
+          $code = $LASTEXITCODE
+          Write-Host "Strict oracle exit $code after $([math]::Round(((Get-Date) - $start).TotalMinutes, 1)) minutes"
+          node -e "const t=require('fs').readFileSync('test-results/strict.json','utf8');const j=JSON.parse(t.slice(t.indexOf('{')));for(const r of j.results)console.log(String(r.outcome).padEnd(14),r.caseId,r.hostBuild,r.message||'');const {results,...rest}=j;console.log(JSON.stringify(rest,null,1))"
+          exit $code
+
+      - name: Measure the editor probes on this runner
+        id: probes_oracle
+        continue-on-error: true
+        timeout-minutes: 30
+        shell: pwsh
+        run: |
+          node syntax_corpus/oracle/run_vbe_oracle.mjs --cases trial/probe-cases.json --json > test-results/probe-verdicts.json
+          Write-Host "Probe oracle exit $LASTEXITCODE"
+          node trial/build-manifest.mjs test-results/probe-verdicts.json test-results/probes-manifest.json
+
+      - name: Editor observations
+        id: observe
+        continue-on-error: true
+        timeout-minutes: 40
+        shell: pwsh
+        env:
+          XLIDE_ORACLE_OBSERVATION_MANIFEST: ${{ github.workspace }}\test-results\probes-manifest.json
+          XLIDE_ORACLE_OBSERVATION_OUTPUT: ${{ github.workspace }}\test-results\observations.json
+        run: |
+          npm run test:integration -- --grep "Native oracle compatibility observations"
+          $code = $LASTEXITCODE
+          if (Test-Path test-results/observations.json) { node trial/summary.mjs test-results/observations.json }
+          exit $code
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: office-trial-results
+          path: test-results/
+          if-no-files-found: warn
+
+      - name: Outcome of each part
+        if: always()
+        shell: pwsh
+        run: |
+          Write-Host "strict oracle:  ${{ steps.strict.outcome }}"
+          Write-Host "probe oracle:   ${{ steps.probes_oracle.outcome }}"
+          Write-Host "observations:   ${{ steps.observe.outcome }}"

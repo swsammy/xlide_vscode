@@ -1,0 +1,746 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "round8_observer_collection_local_events_excel",
+      "description": "Local event class collides with the intrinsic Collection name / positive. Instrumented publication witnesses; independently compile this exact source.",
+      "expected": "observe",
+      "mode": "compile",
+      "entryPoint": "Main",
+      "host": "excel",
+      "modules": [
+        {
+          "name": "Module1",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Function Main() As Variant\nMain = 1\nEnd Function\nPrivate Sub Round8PublicationWitness0()\nDim round8PublicationReady0 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Collection",
+          "type": "class",
+          "source": "Option Explicit\nPublic Event Pulse()\nPrivate Sub Round8PublicationWitness1()\nDim round8PublicationReady1 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Sink",
+          "type": "class",
+          "source": "Option Explicit\nPrivate WithEvents source As Collection\nPrivate Sub Round8PublicationWitness2()\nDim round8PublicationReady2 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "ObservationMarker",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Sub PublicationMarker()\nDim observationReady As Long\nEnd Sub\n"
+        }
+      ]
+    },
+    {
+      "id": "round8_observer_collection_vba_no_events_excel",
+      "description": "Local event class collides with the intrinsic Collection name / negative. Instrumented publication witnesses; independently compile this exact source.",
+      "expected": "observe",
+      "mode": "compile",
+      "entryPoint": "Main",
+      "host": "excel",
+      "modules": [
+        {
+          "name": "Module1",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Function Main() As Variant\nMain = 1\nEnd Function\nPrivate Sub Round8PublicationWitness0()\nDim round8PublicationReady0 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Collection",
+          "type": "class",
+          "source": "Option Explicit\nPublic Event Pulse()\nPrivate Sub Round8PublicationWitness1()\nDim round8PublicationReady1 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Sink",
+          "type": "class",
+          "source": "Option Explicit\nPrivate WithEvents source As VBA.Collection\nPrivate Sub Round8PublicationWitness2()\nDim round8PublicationReady2 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "ObservationMarker",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Sub PublicationMarker()\nDim observationReady As Long\nEnd Sub\n"
+        }
+      ]
+    },
+    {
+      "id": "round8_observer_collection_renamed_events_excel",
+      "description": "Local event class collides with the intrinsic Collection name / positive. Instrumented publication witnesses; independently compile this exact source.",
+      "expected": "observe",
+      "mode": "compile",
+      "entryPoint": "Main",
+      "host": "excel",
+      "modules": [
+        {
+          "name": "Module1",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Function Main() As Variant\nMain = 1\nEnd Function\nPrivate Sub Round8PublicationWitness0()\nDim round8PublicationReady0 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "EventSource",
+          "type": "class",
+          "source": "Option Explicit\nPublic Event Pulse()\nPrivate Sub Round8PublicationWitness1()\nDim round8PublicationReady1 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Sink",
+          "type": "class",
+          "source": "Option Explicit\nPrivate WithEvents source As EventSource\nPrivate Sub Round8PublicationWitness2()\nDim round8PublicationReady2 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "ObservationMarker",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Sub PublicationMarker()\nDim observationReady As Long\nEnd Sub\n"
+        }
+      ]
+    },
+    {
+      "id": "issue03_observer_local_events_handler_excel",
+      "description": "Issue 3 editor probe: a project class named Collection declares Public Event Pulse(); Sink declares WithEvents source As Collection, sets it to New Collection and handles source_Pulse(). Publication witnesses added; this exact source measured natively.",
+      "expected": "observe",
+      "mode": "compile",
+      "entryPoint": "Main",
+      "host": "excel",
+      "modules": [
+        {
+          "name": "Module1",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Function Main() As Variant\nMain = 1\nEnd Function\nPrivate Sub Issue03PublicationWitness0()\nDim issue03PublicationReady0 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Collection",
+          "type": "class",
+          "source": "Option Explicit\nPublic Event Pulse()\nPrivate Sub Issue03PublicationWitness1()\nDim issue03PublicationReady1 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Sink",
+          "type": "class",
+          "source": "Option Explicit\nPrivate WithEvents source As Collection\nPrivate Sub Class_Initialize()\nSet source = New Collection\nEnd Sub\nPrivate Sub source_Pulse()\nDebug.Print 1\nEnd Sub\nPrivate Sub Issue03PublicationWitness2()\nDim issue03PublicationReady2 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "ObservationMarker",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Sub PublicationMarker()\nDim observationReady As Long\nEnd Sub\n"
+        }
+      ]
+    },
+    {
+      "id": "issue03_observer_local_plain_excel",
+      "description": "Issue 3 editor probe: a project class named Collection declares no event; Sink declares WithEvents source As Collection. Publication witnesses added; this exact source measured natively.",
+      "expected": "observe",
+      "mode": "compile",
+      "entryPoint": "Main",
+      "host": "excel",
+      "modules": [
+        {
+          "name": "Module1",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Function Main() As Variant\nMain = 1\nEnd Function\nPrivate Sub Issue03PublicationWitness0()\nDim issue03PublicationReady0 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Collection",
+          "type": "class",
+          "source": "Option Explicit\nPublic Value As Long\nPrivate Sub Issue03PublicationWitness1()\nDim issue03PublicationReady1 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Sink",
+          "type": "class",
+          "source": "Option Explicit\nPrivate WithEvents source As Collection\nPrivate Sub Issue03PublicationWitness2()\nDim issue03PublicationReady2 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "ObservationMarker",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Sub PublicationMarker()\nDim observationReady As Long\nEnd Sub\n"
+        }
+      ]
+    },
+    {
+      "id": "issue03_observer_inactive_event_excel",
+      "description": "Issue 3 editor probe: a project class named Collection declares Public Event Pulse() only inside #If False; Sink declares WithEvents source As Collection. Publication witnesses added; this exact source measured natively.",
+      "expected": "observe",
+      "mode": "compile",
+      "entryPoint": "Main",
+      "host": "excel",
+      "modules": [
+        {
+          "name": "Module1",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Function Main() As Variant\nMain = 1\nEnd Function\nPrivate Sub Issue03PublicationWitness0()\nDim issue03PublicationReady0 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Collection",
+          "type": "class",
+          "source": "Option Explicit\n#If False Then\nPublic Event Pulse()\n#End If\nPrivate Sub Issue03PublicationWitness1()\nDim issue03PublicationReady1 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Sink",
+          "type": "class",
+          "source": "Option Explicit\nPrivate WithEvents source As Collection\nPrivate Sub Issue03PublicationWitness2()\nDim issue03PublicationReady2 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "ObservationMarker",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Sub PublicationMarker()\nDim observationReady As Long\nEnd Sub\n"
+        }
+      ]
+    },
+    {
+      "id": "issue03_observer_local_events_word",
+      "description": "Issue 3 editor probe: a project class named Collection declares Public Event Pulse(); Sink declares WithEvents source As Collection. Publication witnesses added; this exact source measured natively.",
+      "expected": "observe",
+      "mode": "compile",
+      "entryPoint": "Main",
+      "host": "word",
+      "modules": [
+        {
+          "name": "Module1",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Function Main() As Variant\nMain = 1\nEnd Function\nPrivate Sub Issue03PublicationWitness0()\nDim issue03PublicationReady0 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Collection",
+          "type": "class",
+          "source": "Option Explicit\nPublic Event Pulse()\nPrivate Sub Issue03PublicationWitness1()\nDim issue03PublicationReady1 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Sink",
+          "type": "class",
+          "source": "Option Explicit\nPrivate WithEvents source As Collection\nPrivate Sub Issue03PublicationWitness2()\nDim issue03PublicationReady2 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "ObservationMarker",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Sub PublicationMarker()\nDim observationReady As Long\nEnd Sub\n"
+        }
+      ]
+    },
+    {
+      "id": "issue03_observer_renamed_events_word",
+      "description": "Issue 3 editor probe: the same event class named EventSource; Sink declares WithEvents source As EventSource. Publication witnesses added; this exact source measured natively.",
+      "expected": "observe",
+      "mode": "compile",
+      "entryPoint": "Main",
+      "host": "word",
+      "modules": [
+        {
+          "name": "Module1",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Function Main() As Variant\nMain = 1\nEnd Function\nPrivate Sub Issue03PublicationWitness0()\nDim issue03PublicationReady0 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "EventSource",
+          "type": "class",
+          "source": "Option Explicit\nPublic Event Pulse()\nPrivate Sub Issue03PublicationWitness1()\nDim issue03PublicationReady1 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Sink",
+          "type": "class",
+          "source": "Option Explicit\nPrivate WithEvents source As EventSource\nPrivate Sub Issue03PublicationWitness2()\nDim issue03PublicationReady2 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "ObservationMarker",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Sub PublicationMarker()\nDim observationReady As Long\nEnd Sub\n"
+        }
+      ]
+    },
+    {
+      "id": "issue03_observer_vba_no_events_word",
+      "description": "Issue 3 editor probe: a project class named Collection declares Public Event Pulse(); Sink declares WithEvents source As VBA.Collection. Publication witnesses added; this exact source measured natively.",
+      "expected": "observe",
+      "mode": "compile",
+      "entryPoint": "Main",
+      "host": "word",
+      "modules": [
+        {
+          "name": "Module1",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Function Main() As Variant\nMain = 1\nEnd Function\nPrivate Sub Issue03PublicationWitness0()\nDim issue03PublicationReady0 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Collection",
+          "type": "class",
+          "source": "Option Explicit\nPublic Event Pulse()\nPrivate Sub Issue03PublicationWitness1()\nDim issue03PublicationReady1 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Sink",
+          "type": "class",
+          "source": "Option Explicit\nPrivate WithEvents source As VBA.Collection\nPrivate Sub Issue03PublicationWitness2()\nDim issue03PublicationReady2 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "ObservationMarker",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Sub PublicationMarker()\nDim observationReady As Long\nEnd Sub\n"
+        }
+      ]
+    },
+    {
+      "id": "issue03_observer_local_events_handler_word",
+      "description": "Issue 3 editor probe: a project class named Collection declares Public Event Pulse(); Sink declares WithEvents source As Collection, sets it to New Collection and handles source_Pulse(). Publication witnesses added; this exact source measured natively.",
+      "expected": "observe",
+      "mode": "compile",
+      "entryPoint": "Main",
+      "host": "word",
+      "modules": [
+        {
+          "name": "Module1",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Function Main() As Variant\nMain = 1\nEnd Function\nPrivate Sub Issue03PublicationWitness0()\nDim issue03PublicationReady0 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Collection",
+          "type": "class",
+          "source": "Option Explicit\nPublic Event Pulse()\nPrivate Sub Issue03PublicationWitness1()\nDim issue03PublicationReady1 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Sink",
+          "type": "class",
+          "source": "Option Explicit\nPrivate WithEvents source As Collection\nPrivate Sub Class_Initialize()\nSet source = New Collection\nEnd Sub\nPrivate Sub source_Pulse()\nDebug.Print 1\nEnd Sub\nPrivate Sub Issue03PublicationWitness2()\nDim issue03PublicationReady2 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "ObservationMarker",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Sub PublicationMarker()\nDim observationReady As Long\nEnd Sub\n"
+        }
+      ]
+    },
+    {
+      "id": "issue03_observer_local_plain_word",
+      "description": "Issue 3 editor probe: a project class named Collection declares no event; Sink declares WithEvents source As Collection. Publication witnesses added; this exact source measured natively.",
+      "expected": "observe",
+      "mode": "compile",
+      "entryPoint": "Main",
+      "host": "word",
+      "modules": [
+        {
+          "name": "Module1",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Function Main() As Variant\nMain = 1\nEnd Function\nPrivate Sub Issue03PublicationWitness0()\nDim issue03PublicationReady0 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Collection",
+          "type": "class",
+          "source": "Option Explicit\nPublic Value As Long\nPrivate Sub Issue03PublicationWitness1()\nDim issue03PublicationReady1 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Sink",
+          "type": "class",
+          "source": "Option Explicit\nPrivate WithEvents source As Collection\nPrivate Sub Issue03PublicationWitness2()\nDim issue03PublicationReady2 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "ObservationMarker",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Sub PublicationMarker()\nDim observationReady As Long\nEnd Sub\n"
+        }
+      ]
+    },
+    {
+      "id": "issue03_observer_inactive_event_word",
+      "description": "Issue 3 editor probe: a project class named Collection declares Public Event Pulse() only inside #If False; Sink declares WithEvents source As Collection. Publication witnesses added; this exact source measured natively.",
+      "expected": "observe",
+      "mode": "compile",
+      "entryPoint": "Main",
+      "host": "word",
+      "modules": [
+        {
+          "name": "Module1",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Function Main() As Variant\nMain = 1\nEnd Function\nPrivate Sub Issue03PublicationWitness0()\nDim issue03PublicationReady0 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Collection",
+          "type": "class",
+          "source": "Option Explicit\n#If False Then\nPublic Event Pulse()\n#End If\nPrivate Sub Issue03PublicationWitness1()\nDim issue03PublicationReady1 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Sink",
+          "type": "class",
+          "source": "Option Explicit\nPrivate WithEvents source As Collection\nPrivate Sub Issue03PublicationWitness2()\nDim issue03PublicationReady2 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "ObservationMarker",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Sub PublicationMarker()\nDim observationReady As Long\nEnd Sub\n"
+        }
+      ]
+    },
+    {
+      "id": "issue03_observer_local_events_powerpoint",
+      "description": "Issue 3 editor probe: a project class named Collection declares Public Event Pulse(); Sink declares WithEvents source As Collection. Publication witnesses added; this exact source measured natively.",
+      "expected": "observe",
+      "mode": "compile",
+      "entryPoint": "Main",
+      "host": "powerpoint",
+      "modules": [
+        {
+          "name": "Module1",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Function Main() As Variant\nMain = 1\nEnd Function\nPrivate Sub Issue03PublicationWitness0()\nDim issue03PublicationReady0 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Collection",
+          "type": "class",
+          "source": "Option Explicit\nPublic Event Pulse()\nPrivate Sub Issue03PublicationWitness1()\nDim issue03PublicationReady1 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Sink",
+          "type": "class",
+          "source": "Option Explicit\nPrivate WithEvents source As Collection\nPrivate Sub Issue03PublicationWitness2()\nDim issue03PublicationReady2 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "ObservationMarker",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Sub PublicationMarker()\nDim observationReady As Long\nEnd Sub\n"
+        }
+      ]
+    },
+    {
+      "id": "issue03_observer_renamed_events_powerpoint",
+      "description": "Issue 3 editor probe: the same event class named EventSource; Sink declares WithEvents source As EventSource. Publication witnesses added; this exact source measured natively.",
+      "expected": "observe",
+      "mode": "compile",
+      "entryPoint": "Main",
+      "host": "powerpoint",
+      "modules": [
+        {
+          "name": "Module1",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Function Main() As Variant\nMain = 1\nEnd Function\nPrivate Sub Issue03PublicationWitness0()\nDim issue03PublicationReady0 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "EventSource",
+          "type": "class",
+          "source": "Option Explicit\nPublic Event Pulse()\nPrivate Sub Issue03PublicationWitness1()\nDim issue03PublicationReady1 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Sink",
+          "type": "class",
+          "source": "Option Explicit\nPrivate WithEvents source As EventSource\nPrivate Sub Issue03PublicationWitness2()\nDim issue03PublicationReady2 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "ObservationMarker",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Sub PublicationMarker()\nDim observationReady As Long\nEnd Sub\n"
+        }
+      ]
+    },
+    {
+      "id": "issue03_observer_vba_no_events_powerpoint",
+      "description": "Issue 3 editor probe: a project class named Collection declares Public Event Pulse(); Sink declares WithEvents source As VBA.Collection. Publication witnesses added; this exact source measured natively.",
+      "expected": "observe",
+      "mode": "compile",
+      "entryPoint": "Main",
+      "host": "powerpoint",
+      "modules": [
+        {
+          "name": "Module1",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Function Main() As Variant\nMain = 1\nEnd Function\nPrivate Sub Issue03PublicationWitness0()\nDim issue03PublicationReady0 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Collection",
+          "type": "class",
+          "source": "Option Explicit\nPublic Event Pulse()\nPrivate Sub Issue03PublicationWitness1()\nDim issue03PublicationReady1 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Sink",
+          "type": "class",
+          "source": "Option Explicit\nPrivate WithEvents source As VBA.Collection\nPrivate Sub Issue03PublicationWitness2()\nDim issue03PublicationReady2 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "ObservationMarker",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Sub PublicationMarker()\nDim observationReady As Long\nEnd Sub\n"
+        }
+      ]
+    },
+    {
+      "id": "issue03_observer_local_events_handler_powerpoint",
+      "description": "Issue 3 editor probe: a project class named Collection declares Public Event Pulse(); Sink declares WithEvents source As Collection, sets it to New Collection and handles source_Pulse(). Publication witnesses added; this exact source measured natively.",
+      "expected": "observe",
+      "mode": "compile",
+      "entryPoint": "Main",
+      "host": "powerpoint",
+      "modules": [
+        {
+          "name": "Module1",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Function Main() As Variant\nMain = 1\nEnd Function\nPrivate Sub Issue03PublicationWitness0()\nDim issue03PublicationReady0 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Collection",
+          "type": "class",
+          "source": "Option Explicit\nPublic Event Pulse()\nPrivate Sub Issue03PublicationWitness1()\nDim issue03PublicationReady1 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Sink",
+          "type": "class",
+          "source": "Option Explicit\nPrivate WithEvents source As Collection\nPrivate Sub Class_Initialize()\nSet source = New Collection\nEnd Sub\nPrivate Sub source_Pulse()\nDebug.Print 1\nEnd Sub\nPrivate Sub Issue03PublicationWitness2()\nDim issue03PublicationReady2 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "ObservationMarker",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Sub PublicationMarker()\nDim observationReady As Long\nEnd Sub\n"
+        }
+      ]
+    },
+    {
+      "id": "issue03_observer_local_plain_powerpoint",
+      "description": "Issue 3 editor probe: a project class named Collection declares no event; Sink declares WithEvents source As Collection. Publication witnesses added; this exact source measured natively.",
+      "expected": "observe",
+      "mode": "compile",
+      "entryPoint": "Main",
+      "host": "powerpoint",
+      "modules": [
+        {
+          "name": "Module1",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Function Main() As Variant\nMain = 1\nEnd Function\nPrivate Sub Issue03PublicationWitness0()\nDim issue03PublicationReady0 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Collection",
+          "type": "class",
+          "source": "Option Explicit\nPublic Value As Long\nPrivate Sub Issue03PublicationWitness1()\nDim issue03PublicationReady1 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Sink",
+          "type": "class",
+          "source": "Option Explicit\nPrivate WithEvents source As Collection\nPrivate Sub Issue03PublicationWitness2()\nDim issue03PublicationReady2 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "ObservationMarker",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Sub PublicationMarker()\nDim observationReady As Long\nEnd Sub\n"
+        }
+      ]
+    },
+    {
+      "id": "issue03_observer_inactive_event_powerpoint",
+      "description": "Issue 3 editor probe: a project class named Collection declares Public Event Pulse() only inside #If False; Sink declares WithEvents source As Collection. Publication witnesses added; this exact source measured natively.",
+      "expected": "observe",
+      "mode": "compile",
+      "entryPoint": "Main",
+      "host": "powerpoint",
+      "modules": [
+        {
+          "name": "Module1",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Function Main() As Variant\nMain = 1\nEnd Function\nPrivate Sub Issue03PublicationWitness0()\nDim issue03PublicationReady0 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Collection",
+          "type": "class",
+          "source": "Option Explicit\n#If False Then\nPublic Event Pulse()\n#End If\nPrivate Sub Issue03PublicationWitness1()\nDim issue03PublicationReady1 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Sink",
+          "type": "class",
+          "source": "Option Explicit\nPrivate WithEvents source As Collection\nPrivate Sub Issue03PublicationWitness2()\nDim issue03PublicationReady2 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "ObservationMarker",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Sub PublicationMarker()\nDim observationReady As Long\nEnd Sub\n"
+        }
+      ]
+    },
+    {
+      "id": "issue03_observer_local_events_access",
+      "description": "Issue 3 editor probe: a project class named Collection declares Public Event Pulse(); Sink declares WithEvents source As Collection. Publication witnesses added; this exact source measured natively.",
+      "expected": "observe",
+      "mode": "compile",
+      "entryPoint": "Main",
+      "host": "access",
+      "modules": [
+        {
+          "name": "Module1",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Function Main() As Variant\nMain = 1\nEnd Function\nPrivate Sub Issue03PublicationWitness0()\nDim issue03PublicationReady0 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Collection",
+          "type": "class",
+          "source": "Option Explicit\nPublic Event Pulse()\nPrivate Sub Issue03PublicationWitness1()\nDim issue03PublicationReady1 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Sink",
+          "type": "class",
+          "source": "Option Explicit\nPrivate WithEvents source As Collection\nPrivate Sub Issue03PublicationWitness2()\nDim issue03PublicationReady2 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "ObservationMarker",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Sub PublicationMarker()\nDim observationReady As Long\nEnd Sub\n"
+        }
+      ]
+    },
+    {
+      "id": "issue03_observer_renamed_events_access",
+      "description": "Issue 3 editor probe: the same event class named EventSource; Sink declares WithEvents source As EventSource. Publication witnesses added; this exact source measured natively.",
+      "expected": "observe",
+      "mode": "compile",
+      "entryPoint": "Main",
+      "host": "access",
+      "modules": [
+        {
+          "name": "Module1",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Function Main() As Variant\nMain = 1\nEnd Function\nPrivate Sub Issue03PublicationWitness0()\nDim issue03PublicationReady0 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "EventSource",
+          "type": "class",
+          "source": "Option Explicit\nPublic Event Pulse()\nPrivate Sub Issue03PublicationWitness1()\nDim issue03PublicationReady1 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Sink",
+          "type": "class",
+          "source": "Option Explicit\nPrivate WithEvents source As EventSource\nPrivate Sub Issue03PublicationWitness2()\nDim issue03PublicationReady2 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "ObservationMarker",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Sub PublicationMarker()\nDim observationReady As Long\nEnd Sub\n"
+        }
+      ]
+    },
+    {
+      "id": "issue03_observer_vba_no_events_access",
+      "description": "Issue 3 editor probe: a project class named Collection declares Public Event Pulse(); Sink declares WithEvents source As VBA.Collection. Publication witnesses added; this exact source measured natively.",
+      "expected": "observe",
+      "mode": "compile",
+      "entryPoint": "Main",
+      "host": "access",
+      "modules": [
+        {
+          "name": "Module1",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Function Main() As Variant\nMain = 1\nEnd Function\nPrivate Sub Issue03PublicationWitness0()\nDim issue03PublicationReady0 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Collection",
+          "type": "class",
+          "source": "Option Explicit\nPublic Event Pulse()\nPrivate Sub Issue03PublicationWitness1()\nDim issue03PublicationReady1 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Sink",
+          "type": "class",
+          "source": "Option Explicit\nPrivate WithEvents source As VBA.Collection\nPrivate Sub Issue03PublicationWitness2()\nDim issue03PublicationReady2 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "ObservationMarker",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Sub PublicationMarker()\nDim observationReady As Long\nEnd Sub\n"
+        }
+      ]
+    },
+    {
+      "id": "issue03_observer_local_events_handler_access",
+      "description": "Issue 3 editor probe: a project class named Collection declares Public Event Pulse(); Sink declares WithEvents source As Collection, sets it to New Collection and handles source_Pulse(). Publication witnesses added; this exact source measured natively.",
+      "expected": "observe",
+      "mode": "compile",
+      "entryPoint": "Main",
+      "host": "access",
+      "modules": [
+        {
+          "name": "Module1",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Function Main() As Variant\nMain = 1\nEnd Function\nPrivate Sub Issue03PublicationWitness0()\nDim issue03PublicationReady0 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Collection",
+          "type": "class",
+          "source": "Option Explicit\nPublic Event Pulse()\nPrivate Sub Issue03PublicationWitness1()\nDim issue03PublicationReady1 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Sink",
+          "type": "class",
+          "source": "Option Explicit\nPrivate WithEvents source As Collection\nPrivate Sub Class_Initialize()\nSet source = New Collection\nEnd Sub\nPrivate Sub source_Pulse()\nDebug.Print 1\nEnd Sub\nPrivate Sub Issue03PublicationWitness2()\nDim issue03PublicationReady2 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "ObservationMarker",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Sub PublicationMarker()\nDim observationReady As Long\nEnd Sub\n"
+        }
+      ]
+    },
+    {
+      "id": "issue03_observer_local_plain_access",
+      "description": "Issue 3 editor probe: a project class named Collection declares no event; Sink declares WithEvents source As Collection. Publication witnesses added; this exact source measured natively.",
+      "expected": "observe",
+      "mode": "compile",
+      "entryPoint": "Main",
+      "host": "access",
+      "modules": [
+        {
+          "name": "Module1",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Function Main() As Variant\nMain = 1\nEnd Function\nPrivate Sub Issue03PublicationWitness0()\nDim issue03PublicationReady0 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Collection",
+          "type": "class",
+          "source": "Option Explicit\nPublic Value As Long\nPrivate Sub Issue03PublicationWitness1()\nDim issue03PublicationReady1 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Sink",
+          "type": "class",
+          "source": "Option Explicit\nPrivate WithEvents source As Collection\nPrivate Sub Issue03PublicationWitness2()\nDim issue03PublicationReady2 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "ObservationMarker",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Sub PublicationMarker()\nDim observationReady As Long\nEnd Sub\n"
+        }
+      ]
+    },
+    {
+      "id": "issue03_observer_inactive_event_access",
+      "description": "Issue 3 editor probe: a project class named Collection declares Public Event Pulse() only inside #If False; Sink declares WithEvents source As Collection. Publication witnesses added; this exact source measured natively.",
+      "expected": "observe",
+      "mode": "compile",
+      "entryPoint": "Main",
+      "host": "access",
+      "modules": [
+        {
+          "name": "Module1",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Function Main() As Variant\nMain = 1\nEnd Function\nPrivate Sub Issue03PublicationWitness0()\nDim issue03PublicationReady0 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Collection",
+          "type": "class",
+          "source": "Option Explicit\n#If False Then\nPublic Event Pulse()\n#End If\nPrivate Sub Issue03PublicationWitness1()\nDim issue03PublicationReady1 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "Sink",
+          "type": "class",
+          "source": "Option Explicit\nPrivate WithEvents source As Collection\nPrivate Sub Issue03PublicationWitness2()\nDim issue03PublicationReady2 As Long\nEnd Sub\n"
+        },
+        {
+          "name": "ObservationMarker",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Sub PublicationMarker()\nDim observationReady As Long\nEnd Sub\n"
+        }
+      ]
+    },
+    {
+      "id": "observe_local_events_word",
+      "description": "README example for the editor observation suite",
+      "provenance": "observe",
+      "expected": "observe",
+      "mode": "compile",
+      "host": "word",
+      "modules": [
+        {
+          "name": "Module1",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Sub Main()\nDim moduleReady As Long\nEnd Sub\n",
+          "entry": true
+        },
+        {
+          "name": "ObservationMarker",
+          "type": "standard",
+          "source": "Option Explicit\nPublic Sub PublicationMarker()\nDim observationReady As Long\nEnd Sub\n"
+        }
+      ]
+    }
+  ]
+}
