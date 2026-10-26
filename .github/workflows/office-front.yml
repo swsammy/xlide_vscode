@@ -1,4 +1,4 @@
-name: Office front-window trial
+name: Office Word-only warm-up trial
 
 # Trial for issue #1489: the complete setup, end to end. One exact Office
 # build with Outlook, activation and first-run screens off, then the whole VBE
@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   suites:
-    name: Live Office with a window in front (${{ matrix.attempt }})
+    name: Live Office with a Word-only warm-up (${{ matrix.attempt }})
     runs-on: windows-2025
     strategy:
       fail-fast: false
@@ -33,12 +33,6 @@ jobs:
         run: npm ci
       - name: Office
         uses: ./.github/actions/office-setup
-      - name: Put an ordinary window in front, as on a desktop
-        shell: pwsh
-        run: |
-          Start-Process notepad.exe
-          Start-Sleep -Seconds 2
-          Get-Process notepad | Select-Object Id, MainWindowTitle | Format-Table
       - name: Live Office suite
         id: office
         continue-on-error: true

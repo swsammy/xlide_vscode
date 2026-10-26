@@ -1,5 +1,7 @@
-# Opens each Office app once, visibly, with a new file, and closes every
-# first-run screen it shows, so later automation starts from a used profile.
+# Opens Word once, visibly, with a new document, and closes every first-run
+# screen it shows ("Your privacy matters" appears once per profile, on the
+# first visible start of any app). Excel is left alone: a visible warm-up
+# start makes its later windows take the foreground.
 $ErrorActionPreference = 'Continue'
 Add-Type @'
 using System;
@@ -31,10 +33,7 @@ public static class WarmDialogs {
 }
 '@
 $apps = @(
-    @{ ProgId = 'Word.Application'; Image = 'WINWORD'; Open = { param($a) [void]$a.Documents.Add() } },
-    @{ ProgId = 'PowerPoint.Application'; Image = 'POWERPNT'; Open = { param($a) [void]$a.Presentations.Add() } },
-    @{ ProgId = 'Excel.Application'; Image = 'EXCEL'; Open = { param($a) [void]$a.Workbooks.Add() } },
-    @{ ProgId = 'Access.Application'; Image = 'MSACCESS'; Open = { param($a) $a.NewCurrentDatabase((Join-Path $env:RUNNER_TEMP 'warmup.accdb')) } }
+    @{ ProgId = 'Word.Application'; Image = 'WINWORD'; Open = { param($a) [void]$a.Documents.Add() } }
 )
 foreach ($round in 1..2) {
     foreach ($app in $apps) {
