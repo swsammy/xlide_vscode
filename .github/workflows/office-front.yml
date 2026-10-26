@@ -1,4 +1,4 @@
-name: Office final trial
+name: Office front-window trial
 
 # Trial for issue #1489: the complete setup, end to end. One exact Office
 # build with Outlook, activation and first-run screens off, then the whole VBE
@@ -7,15 +7,19 @@ name: Office final trial
 
 "on":
   push:
-    branches: [trial/office-final]
+    branches: [trial/office-front]
 
 permissions:
   contents: read
 
 jobs:
   suites:
-    name: Live Office, integration and editor observations
+    name: Live Office with a window in front (${{ matrix.attempt }})
     runs-on: windows-2025
+    strategy:
+      fail-fast: false
+      matrix:
+        attempt: [1, 2]
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -29,6 +33,12 @@ jobs:
         run: npm ci
       - name: Office
         uses: ./.github/actions/office-setup
+      - name: Put an ordinary window in front, as on a desktop
+        shell: pwsh
+        run: |
+          Start-Process notepad.exe
+          Start-Sleep -Seconds 2
+          Get-Process notepad | Select-Object Id, MainWindowTitle | Format-Table
       - name: Live Office suite
         id: office
         continue-on-error: true
@@ -78,63 +88,3 @@ jobs:
           $parts.GetEnumerator() | ForEach-Object { Write-Host "$($_.Key): $($_.Value)" }
           if ($parts.Values | Where-Object { $_ -ne 'success' }) { exit 1 }
 
-  shard:
-    name: Oracle shard ${{ matrix.shard }}
-    runs-on: windows-2025
-    timeout-minutes: 120
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', 'crash']
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: '24.22.0'
-          cache: npm
-      - name: Install dependencies
-        run: npm ci
-      - name: Office
-        uses: ./.github/actions/office-setup
-      - name: Run the shard
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force test-results | Out-Null
-          $shard = '${{ matrix.shard }}'
-          node trial/shard.mjs $shard 20 test-results/cases.json
-          node trial/run-shard.mjs test-results/cases.json test-results "shard-$shard"
-      - name: Upload the shard
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: oracle-shard-${{ matrix.shard }}
-          path: test-results/
-          if-no-files-found: warn
-
-  combine:
-    name: Combine the shards
-    needs: shard
-    if: always()
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: '24.22.0'
-      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with:
-          pattern: oracle-shard-*
-          path: shards
-      - name: Compare with the recorded verdicts
-        run: node trial/aggregate.mjs shards
-      - name: Upload the summary
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: oracle-summary
-          path: shards/summary.json
