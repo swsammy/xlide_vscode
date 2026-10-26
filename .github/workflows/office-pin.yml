@@ -1,0 +1,76 @@
+name: Office pin trial
+
+# Trial for issue #1489: can a hosted runner install one exact Office build,
+# so CI answers do not drift with Office updates? Installs with Microsoft's
+# Office Deployment Tool (through the same Chocolatey package setup-vba uses)
+# and a Version attribute, then runs the 50 collection_class cases strictly.
+# Runs only on pushes to this trial branch, in a fork.
+
+"on":
+  push:
+    branches: [trial/office-pin]
+
+permissions:
+  contents: read
+
+jobs:
+  pin:
+    name: Office ${{ matrix.version }} (${{ matrix.channel }})
+    runs-on: windows-2025
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { channel: Current, version: 16.0.20430.20182 }
+          - { channel: MonthlyEnterprise, version: 16.0.20430.20182 }
+          - { channel: MonthlyEnterprise, version: 16.0.20430.20146 }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24.22.0'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Office ${{ matrix.version }}
+        shell: pwsh
+        run: |
+          $config = @"
+          <Configuration>
+            <Add OfficeClientEdition="64" Channel="${{ matrix.channel }}" Version="${{ matrix.version }}">
+              <Product ID="O365ProPlusRetail">
+                <Language ID="MatchOS" />
+                <ExcludeApp ID="Groove" /><ExcludeApp ID="Lync" /><ExcludeApp ID="OneDrive" /><ExcludeApp ID="OneNote" />
+                <ExcludeApp ID="Outlook" /><ExcludeApp ID="OutlookForWindows" /><ExcludeApp ID="Publisher" /><ExcludeApp ID="Teams" />
+              </Product>
+            </Add>
+            <Updates Enabled="FALSE" />
+            <Display Level="None" AcceptEULA="TRUE" />
+          </Configuration>
+          "@
+          $path = Join-Path $env:RUNNER_TEMP 'odt-config.xml'
+          $config | Out-File -FilePath $path -Encoding utf8
+          $start = Get-Date
+          choco install office365proplus -y --params "/ConfigPath:`"$path`""
+          Write-Host "Install exit $LASTEXITCODE after $([math]::Round(((Get-Date) - $start).TotalMinutes, 1)) minutes"
+      - name: Prepare Office
+        uses: DecimalTurn/setup-vba@797e4a232699a98507cb4411d5bea3697427ad57 # v0.3.0
+        with:
+          office-apps: Excel,Word,PowerPoint,Access
+          install-office: 'false'
+      - name: Report the installed build
+        shell: pwsh
+        run: |
+          Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Office\ClickToRun\Configuration' | Select-Object VersionToReport, CDNBaseUrl, UpdatesEnabled, Platform | Format-List
+          New-Item -ItemType Directory -Force test-results | Out-Null
+      - name: Strict oracle on the 50 collection_class cases
+        shell: pwsh
+        run: |
+          $cases = Get-Content trial/strict-ids.txt | ForEach-Object { '--case'; $_ }
+          node syntax_corpus/oracle/run_vbe_oracle.mjs --strict --json --checkpoint test-results/strict.jsonl @cases > test-results/strict.json
+          $code = $LASTEXITCODE
+          node -e "const t=require('fs').readFileSync('test-results/strict.json','utf8');const j=JSON.parse(t.slice(t.indexOf('{')));const b=new Set(j.results.map(r=>r.hostBuild));const {results,...rest}=j;console.log('builds',[...b].join(', '),JSON.stringify(rest))"
+          exit $code
