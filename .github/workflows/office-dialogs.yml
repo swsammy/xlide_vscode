@@ -21,11 +21,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { name: 'A control (earlier keys)', product: O365ProPlusRetail, channel: MonthlyEnterprise, scl: '0', privacy: '0', licensing: '0', oem: '0' }
-          - { name: 'B privacy policies + licensing keys', product: O365ProPlusRetail, channel: MonthlyEnterprise, scl: '0', privacy: '1', licensing: '1', oem: '0' }
-          - { name: 'C shared computer licensing', product: O365ProPlusRetail, channel: MonthlyEnterprise, scl: '1', privacy: '1', licensing: '1', oem: '0' }
-          - { name: 'D volume licensed ProPlus 2024', product: ProPlus2024Volume, channel: PerpetualVL2024, scl: '0', privacy: '1', licensing: '1', oem: '0' }
-          - { name: 'E OEM first-run mode', product: O365ProPlusRetail, channel: MonthlyEnterprise, scl: '0', privacy: '1', licensing: '1', oem: '1' }
+          - { name: 'W1 B settings + warm-up', product: O365ProPlusRetail, channel: MonthlyEnterprise, scl: '0', privacy: '1', licensing: '1', oem: '0', warmup: '1' }
+          - { name: 'W2 B settings + warm-up', product: O365ProPlusRetail, channel: MonthlyEnterprise, scl: '0', privacy: '1', licensing: '1', oem: '0', warmup: '1' }
+          - { name: 'W3 B settings + warm-up', product: O365ProPlusRetail, channel: MonthlyEnterprise, scl: '0', privacy: '1', licensing: '1', oem: '0', warmup: '1' }
+          - { name: 'P privacy settings only', product: O365ProPlusRetail, channel: MonthlyEnterprise, scl: '0', privacy: '1', licensing: '0', oem: '0', warmup: '0' }
+          - { name: 'L activation settings only', product: O365ProPlusRetail, channel: MonthlyEnterprise, scl: '0', privacy: '0', licensing: '1', oem: '0', warmup: '0' }
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -102,6 +102,10 @@ jobs:
         with:
           office-apps: Excel,Word,PowerPoint,Access
           install-office: 'false'
+      - name: Warm up each Office app
+        if: matrix.warmup == '1'
+        shell: pwsh
+        run: ./trial/warmup.ps1
       - name: The live Office checks that fail on any dialog
         continue-on-error: true
         run: npx vitest run --config vitest.office.config.ts tests/office/addVba.office.ts tests/office/shapeFormatting.office.ts
