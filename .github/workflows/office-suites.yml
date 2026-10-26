@@ -26,10 +26,44 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
-      - name: Install and prepare Office
+      - name: Install Office, with Outlook for its object library
+        shell: pwsh
+        run: |
+          $config = @"
+          <Configuration>
+            <Add OfficeClientEdition="64" Channel="MonthlyEnterprise">
+              <Product ID="O365ProPlusRetail">
+                <Language ID="MatchOS" />
+                <ExcludeApp ID="Groove" /><ExcludeApp ID="Lync" /><ExcludeApp ID="OneDrive" /><ExcludeApp ID="OneNote" />
+                <ExcludeApp ID="OutlookForWindows" /><ExcludeApp ID="Publisher" /><ExcludeApp ID="Teams" />
+              </Product>
+            </Add>
+            <Display Level="None" AcceptEULA="TRUE" />
+          </Configuration>
+          "@
+          $path = Join-Path $env:RUNNER_TEMP 'odt-config.xml'
+          $config | Out-File -FilePath $path -Encoding utf8
+          choco install office365proplus -y --params "/ConfigPath:`"$path`""
+      - name: Turn off Office's first-run screens
+        shell: pwsh
+        run: |
+          function Set-Dword($key, $name, $value) {
+            New-Item -Path $key -Force | Out-Null
+            New-ItemProperty -Path $key -Name $name -Value $value -PropertyType DWord -Force | Out-Null
+            Write-Host "$key\$name = $value"
+          }
+          Set-Dword 'HKCU:\Software\Microsoft\Office\16.0\Common\General' 'ShownFirstRunOptin' 1
+          Set-Dword 'HKCU:\Software\Microsoft\Office\16.0\Common\General' 'ShownOptIn' 1
+          Set-Dword 'HKCU:\Software\Microsoft\Office\16.0\Registration' 'AcceptAllEulas' 1
+          Set-Dword 'HKCU:\Software\Microsoft\Office\16.0\Common\Privacy\SettingsStore\Anonymous' 'OptionalConnectedExperiencesNoticeVersion' 2
+          Set-Dword 'HKCU:\Software\Microsoft\Office\16.0\Common\Privacy\SettingsStore\Anonymous' 'FRESettingsStoreVersion' 2
+          Set-Dword 'HKCU:\Software\Policies\Microsoft\Office\16.0\Common\SignIn' 'SignInOptions' 3
+          Set-Dword 'HKCU:\Software\Policies\Microsoft\Office\16.0\Common\General' 'ShownFirstRunOptin' 1
+      - name: Prepare Office
         uses: DecimalTurn/setup-vba@797e4a232699a98507cb4411d5bea3697427ad57 # v0.3.0
         with:
           office-apps: Excel,Word,PowerPoint,Access
+          install-office: 'false'
       - name: Report the Office version
         shell: pwsh
         run: Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Office\ClickToRun\Configuration' | Select-Object VersionToReport, Platform | Format-List
