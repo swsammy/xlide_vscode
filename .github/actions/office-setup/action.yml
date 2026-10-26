@@ -1,0 +1,70 @@
+name: Office for VBA checks
+description: >
+  Installs one exact Office build (Excel, Word, PowerPoint, Access, and Outlook
+  for its object library) with updates off, turns off its activation and
+  first-run screens, enables VBA project access, and opens each app once.
+
+inputs:
+  channel:
+    description: Click-to-Run channel the build was released on.
+    default: Current
+  version:
+    description: Exact Office build.
+    default: 16.0.20430.20182
+
+runs:
+  using: composite
+  steps:
+    - name: Install Office ${{ inputs.version }}
+      shell: pwsh
+      run: |
+        $config = @"
+        <Configuration>
+          <Add OfficeClientEdition="64" Channel="${{ inputs.channel }}" Version="${{ inputs.version }}">
+            <Product ID="O365ProPlusRetail">
+              <Language ID="MatchOS" />
+              <ExcludeApp ID="Groove" /><ExcludeApp ID="Lync" /><ExcludeApp ID="OneDrive" /><ExcludeApp ID="OneNote" />
+              <ExcludeApp ID="OutlookForWindows" /><ExcludeApp ID="Publisher" /><ExcludeApp ID="Teams" />
+            </Product>
+          </Add>
+          <Updates Enabled="FALSE" />
+          <Display Level="None" AcceptEULA="TRUE" />
+        </Configuration>
+        "@
+        $path = Join-Path $env:RUNNER_TEMP 'odt-config.xml'
+        $config | Out-File -FilePath $path -Encoding utf8
+        choco install office365proplus -y --no-progress --params "/ConfigPath:`"$path`""
+        if ($LASTEXITCODE) { exit $LASTEXITCODE }
+        $installed = (Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Office\ClickToRun\Configuration').VersionToReport
+        Write-Host "Installed Office $installed"
+        if ($installed -ne '${{ inputs.version }}') { throw "Expected Office ${{ inputs.version }}, got $installed" }
+    - name: Turn off Office's activation and first-run screens
+      shell: pwsh
+      run: |
+        function Set-Dword($key, $name, $value) {
+          New-Item -Path $key -Force | Out-Null
+          New-ItemProperty -Path $key -Name $name -Value $value -PropertyType DWord -Force | Out-Null
+        }
+        $common = 'HKCU:\Software\Microsoft\Office\16.0\Common'
+        $policy = 'HKCU:\Software\Policies\Microsoft\Office\16.0\Common'
+        Set-Dword "$common\General" ShownFirstRunOptin 1
+        Set-Dword "$common\General" ShownOptIn 1
+        Set-Dword "$common\General" SkipSignInOnFirstRun 1
+        Set-Dword 'HKCU:\Software\Microsoft\Office\16.0\Registration' AcceptAllEulas 1
+        Set-Dword "$common\Privacy\SettingsStore\Anonymous" OptionalConnectedExperiencesNoticeVersion 2
+        Set-Dword "$common\Privacy\SettingsStore\Anonymous" FRESettingsStoreVersion 2
+        Set-Dword "$common\Licensing" DisableActivationUI 1
+        Set-Dword "$policy\Licensing" DisableActivationUI 1
+        Set-Dword "$common\Identity" NoDomainUser 1
+        Set-Dword "$common\Identity" DisableAADWAM 1
+        Set-Dword "$common\Identity" DisableADALatopWAMOverride 1
+        Set-Dword "$policy\SignIn" SignInOptions 3
+        Set-Dword "$policy\General" ShownFirstRunOptin 1
+    - name: Enable VBA project access and open each app once
+      uses: DecimalTurn/setup-vba@797e4a232699a98507cb4411d5bea3697427ad57 # v0.3.0
+      with:
+        office-apps: Excel,Word,PowerPoint,Access
+        install-office: 'false'
+    - name: Close the screens Office shows on a first visible start
+      shell: pwsh
+      run: ${{ github.action_path }}/warmup.ps1
