@@ -30,10 +30,29 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
-      - name: Install and prepare Office
+      - name: Install Office, with Outlook for its object library
+        shell: pwsh
+        run: |
+          $config = @"
+          <Configuration>
+            <Add OfficeClientEdition="64" Channel="MonthlyEnterprise">
+              <Product ID="O365ProPlusRetail">
+                <Language ID="MatchOS" />
+                <ExcludeApp ID="Groove" /><ExcludeApp ID="Lync" /><ExcludeApp ID="OneDrive" /><ExcludeApp ID="OneNote" />
+                <ExcludeApp ID="OutlookForWindows" /><ExcludeApp ID="Publisher" /><ExcludeApp ID="Teams" />
+              </Product>
+            </Add>
+            <Display Level="None" AcceptEULA="TRUE" />
+          </Configuration>
+          "@
+          $path = Join-Path $env:RUNNER_TEMP 'odt-config.xml'
+          $config | Out-File -FilePath $path -Encoding utf8
+          choco install office365proplus -y --params "/ConfigPath:`"$path`""
+      - name: Prepare Office
         uses: DecimalTurn/setup-vba@797e4a232699a98507cb4411d5bea3697427ad57 # v0.3.0
         with:
           office-apps: Excel,Word,PowerPoint,Access
+          install-office: 'false'
       - name: Report the environment
         shell: pwsh
         run: |
@@ -49,11 +68,7 @@ jobs:
         run: |
           $shard = '${{ matrix.shard }}'
           node trial/shard.mjs $shard 20 test-results/cases.json
-          $start = Get-Date
-          node syntax_corpus/oracle/run_vbe_oracle.mjs --cases test-results/cases.json --strict --json --checkpoint "test-results/shard-$shard.jsonl" > "test-results/shard-$shard.json"
-          $code = $LASTEXITCODE
-          Write-Host "Shard $shard exit $code after $([math]::Round(((Get-Date) - $start).TotalMinutes, 1)) minutes"
-          exit 0
+          node trial/run-shard.mjs test-results/cases.json test-results "shard-$shard"
       - name: Upload the shard
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

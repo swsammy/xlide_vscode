@@ -8,10 +8,11 @@ const corpus = JSON.parse(fs.readFileSync('syntax_corpus/oracle/vbe_oracle_cases
 const byId = new Map(corpus.map((c) => [c.id, c]));
 const results = new Map();
 const files = [];
+const setAsideFiles = [];
 (function walk(d) {
     for (const e of fs.readdirSync(d, { withFileTypes: true })) {
         const p = path.join(d, e.name);
-        if (e.isDirectory()) { walk(p); } else if (e.name.endsWith('.jsonl')) { files.push(p); }
+        if (e.isDirectory()) { walk(p); } else if (e.name.endsWith('.jsonl')) { files.push(p); } else if (e.name.endsWith('-set-aside.json')) { setAsideFiles.push(p); }
     }
 })(dir);
 for (const f of files) {
@@ -19,6 +20,9 @@ for (const f of files) {
         if (!line.trim()) { continue; }
         try { const { result } = JSON.parse(line); results.set(result.caseId, result); } catch { /* torn last line */ }
     }
+}
+for (const f of setAsideFiles) {
+    for (const r of JSON.parse(fs.readFileSync(f, 'utf8'))) { if (!results.has(r.caseId)) { results.set(r.caseId, r); } }
 }
 const tally = {};
 const differs = [];
