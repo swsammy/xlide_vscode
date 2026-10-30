@@ -1,0 +1,80 @@
+name: Office install timing
+
+# Times Office installed by the Chocolatey office365proplus package (as
+# setup-vba v0.3.0 does) against the Office Deployment Tool run directly,
+# with the same configuration file, on fresh windows-2025 runners.
+
+on:
+  push:
+    branches: [trial/install-timing]
+
+permissions:
+  contents: read
+
+jobs:
+  install:
+    name: ${{ matrix.method }} ${{ matrix.rep }}
+    runs-on: windows-2025
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        method: [choco, odt]
+        rep: [1, 2, 3, 4, 5]
+    steps:
+      - name: Write the configuration (setup-vba v0.3.0 default)
+        shell: pwsh
+        run: |
+          $config = @"
+          <Configuration>
+            <Add OfficeClientEdition="64" Channel="MonthlyEnterprise">
+              <Product ID="O365ProPlusRetail">
+                <Language ID="MatchOS" />
+                <ExcludeApp ID="Groove" /><ExcludeApp ID="Lync" /><ExcludeApp ID="OneDrive" /><ExcludeApp ID="OneNote" />
+                <ExcludeApp ID="Outlook" /><ExcludeApp ID="OutlookForWindows" /><ExcludeApp ID="Publisher" /><ExcludeApp ID="Teams" />
+              </Product>
+            </Add>
+            <Display Level="None" AcceptEULA="TRUE" />
+          </Configuration>
+          "@
+          $config | Out-File -FilePath (Join-Path $env:RUNNER_TEMP 'odt-config.xml') -Encoding utf8
+
+      - name: Install with Chocolatey
+        if: matrix.method == 'choco'
+        shell: pwsh
+        run: |
+          $config = Join-Path $env:RUNNER_TEMP 'odt-config.xml'
+          $sw = [Diagnostics.Stopwatch]::StartNew()
+          choco install office365proplus -y --params "/ConfigPath:`"$config`""
+          if ($LASTEXITCODE) { throw "choco exited with $LASTEXITCODE" }
+          "INSTALL_SECONDS=$([int]$sw.Elapsed.TotalSeconds)" | Out-File $env:GITHUB_STEP_SUMMARY -Append
+
+      - name: Install with the Office Deployment Tool
+        if: matrix.method == 'odt'
+        shell: pwsh
+        run: |
+          $config = Join-Path $env:RUNNER_TEMP 'odt-config.xml'
+          $sw = [Diagnostics.Stopwatch]::StartNew()
+          $setup = Join-Path $env:RUNNER_TEMP 'setup.exe'
+          Invoke-WebRequest -Uri 'https://officecdn.microsoft.com/pr/wsus/setup.exe' -OutFile $setup
+          $signature = Get-AuthenticodeSignature $setup
+          if ($signature.Status -ne 'Valid') { throw "Bad signature: $($signature.Status)" }
+          Write-Host "ODT $((Get-Item $setup).VersionInfo.FileVersion) downloaded in $([int]$sw.Elapsed.TotalSeconds) s"
+          $p = Start-Process -FilePath $setup -ArgumentList '/configure', "`"$config`"" -Wait -PassThru -NoNewWindow
+          if ($p.ExitCode) { throw "ODT exited with $($p.ExitCode)" }
+          "INSTALL_SECONDS=$([int]$sw.Elapsed.TotalSeconds)" | Out-File $env:GITHUB_STEP_SUMMARY -Append
+
+      - name: Report
+        if: always()
+        shell: pwsh
+        run: |
+          $c = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Office\ClickToRun\Configuration' -ErrorAction SilentlyContinue
+          Write-Host "Installed: $($c.VersionToReport) $($c.Platform) $($c.CDNBaseUrl)"
+          "VERSION=$($c.VersionToReport)" | Out-File $env:GITHUB_STEP_SUMMARY -Append
+          $log = 'C:\ProgramData\chocolatey\logs\chocolatey.log'
+          if (Test-Path $log) {
+            Write-Host '--- chocolatey.log lines about the install phases ---'
+            Get-Content $log | Select-String -Pattern 'Office365|setup.exe|/download|/configure|Downloading|Installing|installed|Download' | Select-Object -Last 60 | ForEach-Object { $_.Line }
+          }
+          Write-Host '--- ClickToRun logs ---'
+          Get-ChildItem "$env:TEMP","$env:windir\Temp" -Filter '*.log' -ErrorAction SilentlyContinue | Where-Object Name -match '^[A-Z0-9-]+-\d{8}-\d{4}' | Select-Object FullName, Length, LastWriteTime | Format-Table -AutoSize | Out-String -Width 300 | Write-Host
